@@ -70,8 +70,10 @@ carries a status code, not a request.
 
 ## Observability
 
-The question this has to answer is "what happened to *this* payment", so every
-line written for one attempt shares a `PaymentId` logging scope.
+The question this has to answer is "what happened to *this* payment", so every line
+`PaymentsService` writes for one attempt shares a `PaymentId` logging scope. A rejection
+is the exception: it is logged in the controller, before an id exists, and correlates on
+the request's trace id instead.
 
 The id is allocated **before** the bank is called, not after it answers. That is the
 detail that makes the failure path traceable: when the bank gives no answer, no payment
@@ -97,13 +99,18 @@ info: Payment Authorized by the acquiring bank in 42ms.   PaymentId=3f2a…
   failed and never echo the value that failed it, so this cannot become a side channel
   for card data.
 
-**Card data is never logged, and that is a test rather than a comment.**
-`NeverLogsCardDataWhenAPaymentSucceeds` and `NeverLogsCardDataWhenTheBankFails` capture
-everything written — including scope state and the full exception — and assert the card
-number, CVV and expiry are absent. The failure path is covered separately because an
-exception is where secrets usually leak in. Both start with a positive control asserting
-that something *was* logged, since otherwise they would pass against a logger that
-silently writes nothing.
+**Card data is never logged.** The only values that reach a log line are `PaymentId`,
+`Amount`, `Currency`, `PaymentStatus` and `ElapsedMilliseconds`. Nothing on the logging
+path is derived from the PAN, the CVV or the expiry, and the bank-failure line records the
+exception, whose message carries a status code rather than the request that produced it.
+
+That is an argument from the code, not an assertion in the suite, and it is the weakest
+form of this guarantee: one careless log line breaks it silently and no test goes red. The
+test this wants is one that captures everything written — including scope state and the
+full exception — and asserts that no entry contains a run of twelve or more digits, so it
+catches a PAN nobody thought to look for rather than only the one the fixture used. The
+failure path needs covering separately, because an exception is where secrets usually leak
+in.
 
 ## Other decisions worth naming
 
@@ -116,8 +123,10 @@ are individually in range.
 
 **Request fields are nullable.** This is the reason a missing `amount` can be rejected as
 "Amount is required" rather than "must be greater than zero". The cost is that
-`PaymentsService` reads them as non-null, documented as a precondition on the method. The
-alternative — a second, validated model — is a lot of type for six fields.
+`PaymentsService` dereferences them with `!`, on the invariant that validation has already
+run — enforced by the order of the two calls in the controller, not by the type system.
+The alternative — a second, validated model the service takes instead — moves that
+invariant into a type, and is the right change the moment a second caller appears.
 
 **The repository is a `ConcurrentDictionary` behind an interface.** It's a singleton, so
 concurrent requests genuinely race and `List<T>.Add` can lose writes or throw; losing the
