@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 
 using FluentValidation;
 
+using PaymentGateway.Api.Clients;
+
 using PaymentGateway.Api.Services;
 using PaymentGateway.Api.Validation;
 
@@ -22,6 +24,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<PaymentsRepository>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<PostPaymentRequestValidator>();
+
+
+var acquiringBankBaseUrl = builder.Configuration["AcquiringBank:BaseUrl"]
+    ?? throw new InvalidOperationException("AcquiringBank:BaseUrl must be configured.");
+
+builder.Services.AddHttpClient<IAcquiringBankClient, AcquiringBankClient>(client =>
+{
+    client.BaseAddress = new Uri(acquiringBankBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 
 var app = builder.Build();
 
