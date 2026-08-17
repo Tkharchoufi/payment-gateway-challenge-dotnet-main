@@ -1,6 +1,9 @@
 using System.Text.Json.Serialization;
 
+using FluentValidation;
+
 using PaymentGateway.Api.Services;
+using PaymentGateway.Api.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<PaymentsRepository>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<PostPaymentRequestValidator>();
 
 var app = builder.Build();
 
