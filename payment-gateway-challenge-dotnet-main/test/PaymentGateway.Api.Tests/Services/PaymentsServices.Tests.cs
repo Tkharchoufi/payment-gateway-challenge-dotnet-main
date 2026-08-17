@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 using PaymentGateway.Api.Clients;
@@ -15,7 +16,7 @@ public class PaymentsServiceTests
 
     public PaymentsServiceTests()
     {
-        _service = new PaymentsService(_acquiringBank.Object, _repository);
+        _service = new PaymentsService(_acquiringBank.Object, _repository, NullLogger<PaymentsService>.Instance);
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public class PaymentsServiceTests
     public async Task RecordsNothingWhenTheBankGivesNoAnswer()
     {
         var repository = new Mock<IPaymentsRepository>();
-        var service = new PaymentsService(_acquiringBank.Object, repository.Object);
+        var service = new PaymentsService(_acquiringBank.Object, repository.Object, NullLogger<PaymentsService>.Instance);
 
         _acquiringBank
             .Setup(bank => bank.AuthorizeAsync(It.IsAny<AcquiringBankRequest>(), It.IsAny<CancellationToken>()))
