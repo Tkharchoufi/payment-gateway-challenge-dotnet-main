@@ -17,7 +17,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
+    public ActionResult<PostPaymentResponse?> GetPayment(Guid id)
     {
         var payment = _paymentsRepository.Get(id);
 
