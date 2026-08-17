@@ -43,10 +43,16 @@ public class PaymentsController : Controller
 
         if (!validationResult.IsValid)
         {
+            var errors = validationResult.Errors.Select(error => error.ErrorMessage).ToArray();
+
+             _logger.LogInformation(
+                "Rejected a payment request with {ValidationErrorCount} errors: {ValidationErrors}.",
+                errors.Length,
+                string.Join("; ", errors));
             return BadRequest(new PostPaymentRejectedResponse
             {
                 Status = PaymentStatus.Rejected,
-                Errors = validationResult.Errors.Select(error => error.ErrorMessage).ToArray()
+                Errors = errors
             });
         }
 
@@ -58,8 +64,6 @@ public class PaymentsController : Controller
         }
         catch (AcquiringBankUnavailableException exception)
         {
-            _logger.LogError(exception, "The acquiring bank did not return a payment outcome.");
-
             return Problem(
                 statusCode: StatusCodes.Status502BadGateway,
                 title: "The acquiring bank did not return a payment outcome.",
