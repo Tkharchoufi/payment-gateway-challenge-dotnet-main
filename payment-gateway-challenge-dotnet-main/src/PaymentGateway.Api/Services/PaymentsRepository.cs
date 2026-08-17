@@ -3,7 +3,7 @@ using PaymentGateway.Api.Models.Responses;
 
 namespace PaymentGateway.Api.Services;
 
-public class PaymentsRepository
+public class PaymentsRepository:IPaymentsRepository
 {
     private readonly List<Payment> Payments = new();
     
