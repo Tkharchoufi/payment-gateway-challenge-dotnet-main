@@ -1,3 +1,5 @@
+**Submission note** design descisions and assumptions are written up in [Solution.md](Solution.md). Run `docker compose up -d` then `dotnet test`. 
+
 # Instructions for candidates
 
 This is the .NET version of the Payment Gateway challenge. If you haven't already read this [README.md](https://github.com/cko-recruitment/) on the details of this exercise, please do so now. 
